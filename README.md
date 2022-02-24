@@ -1,5 +1,8 @@
 # 基于springboot-vue的curd-demo
 
+[gitee仓库下载地址](https://gitee.com/CHINA_LIANG888888/springboot-vue-curd-demo)
+
+
 ## 文件目录说明
 
 当前分支分为三个目录
