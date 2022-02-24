@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <!-- inner css -->
+  <link rel="stylesheet" href="index.css">
+  <!-- bootstrap css -->
+  <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.1/css/bootstrap.css" rel="stylesheet">
+  <!-- font-awesome css -->
+  <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+</head>
+
+<body>
+  <div id="app">
+    <!-- 标题栏 -->
+    <h1>
+      信息管理
+      <small class="text-muted">CURD DEMO</small>
+    </h1>
+    <!-- 搜索栏 -->
+    <div class="container">
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown"
+            aria-expanded="false">{{searchConditionValue}}</button>
+          <div class="dropdown-menu">
+            <div class="dropdown-item" v-for="(value, key) in searchItems" :key="key" :value="value"
+              @click="setSearchCondition(key, value)">{{ value }}</div>
+          </div>
+        </div>
+        <input type="text" class="form-control" id="basic-url" aria-describedby="basic-addon3" v-model="searchKeyword">
+        <div class="input-group-append">
+          <button class="btn btn-outline-secondary" type="button" @click="search">
+            <i class="fa fa-search" aria-hidden="true"></i>
+          </button>
+          <button class="btn btn-outline-secondary" type="button" @click="toCurdData(0, -1)" data-toggle="modal"
+            data-target="#curdModal">
+            <i class="fa fa-plus" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- 数据列表 -->
+    <div class="container">
+      <!-- 列表 -->
+      <table class="table">
+        <thead class="thead-light">
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">姓名</th>
+            <th scope="col">联系方式</th>
+            <th scope="col">邮箱</th>
+            <th scope="col">联系地址</th>
+            <th scope="col">管理操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(item, index) in itemsData" :key="index">
+            <th scope="row">{{index + 1}}</th>
+            <td>{{item.name}}</td>
+            <td>{{item.phone}}</td>
+            <td>{{item.email}}</td>
+            <td>{{item.address}}</td>
+            <td>
+              <button class="btn btn-outline-info" type="button" @click="toCurdData(1, item.id)" data-toggle="modal"
+                data-target="#curdModal">
+                <i class="fa fa-info" aria-hidden="true"></i>
+              </button>
+              <button class="btn btn-outline-warning" type="button" @click="toCurdData(2, item.id)" data-toggle="modal"
+                data-target="#curdModal">
+                <i class="fa fa-pencil" aria-hidden="true"></i>
+              </button>
+              <button class="btn btn-outline-danger" type="button" @click="toCurdData(3, item.id)" data-toggle="modal"
+                data-target="#curdModal">
+                <i class="fa fa-trash-o" aria-hidden="true"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <!-- 分页 -->
+      <nav aria-label="Page navigation example">
+        <ul class="pagination justify-content-center">
+          <li class="page-item">
+            <button type="button" class="btn btn-light" @click="previousPage">
+              <span aria-hidden="true">&laquo;</span>
+            </button>
+          </li>
+          &nbsp;
+          <li class="page-item">
+            <input type="number" class="form-control" v-model="page" min="1" @input="changePageInput()">
+          </li>
+          &nbsp;
+          <li class="page-item">
+            <button type="button" class="btn btn-light" @click="nextPage">
+              <span aria-hidden="true">&raquo;</span>
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </div>
+    <!-- 弹窗(模态框) -->
+    <div class="modal fade" id="curdModal" tabindex="-1" aria-labelledby="curdModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="curdModalLabel">{{curdTitle}}</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <!-- 判断是否是删除信息的弹窗, 不是则显示表单, 是则提示是否删除 -->
+            <form v-if="curdType != 3">
+              <div class="form-group row" v-for="(value, key) in detailItems" :key="key" :value="value">
+                <label class="col-sm-3 col-form-label">{{value}}</label>
+                <div class="col-sm-9">
+                  <!-- 判断是否是创建时间和更新时间, 是则设置为只读不可改 -->
+                  <input v-if="key == 'createTime' || key == 'updateTime'" type="text" readonly class="form-control"
+                    v-model="detailItemsData[key]">
+                  <!-- 判断是否是性别项或婚姻项, 是则根据是否是查看详情, 来确认是否只读不可操作 -->
+                  <input v-else-if="key != 'sex' && key != 'marry'" type="text" :disabled="curdType == 1"
+                    class="form-control" v-model="detailItemsData[key]">
+                  <!-- 判断是否是性别项, 是则根据是否是新增信息, 来确认是否只读不可操作 -->
+                  <select v-else-if="key == 'sex'" :readonly="curdType != 0" :disabled="curdType != 0"
+                    class="form-control" v-model="detailItemsData.sex">
+                    <option :value="0">男</option>
+                    <option :value="1">女</option>
+                  </select>
+                  <!-- 判断是否是婚姻情况项, 是则根据是否是新增信息, 来确认是否只读不可操作 -->
+                  <select v-else="key == 'marry'" :readonly="curdType != 0" :disabled="curdType != 0"
+                    class="form-control" v-model="detailItemsData.marry">
+                    <option :value="0">未婚</option>
+                    <option :value="1">已婚</option>
+                  </select>
+                </div>
+              </div>
+            </form>
+            <p v-else>确认删除该条信息?</p>
+          </div>
+          <!-- 判断是否是查看详情的弹窗, 是则不显示按钮, 否则显示按钮 -->
+          <div class="modal-footer" v-if="curdType != 1">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">取消操作</button>
+            <button type="button" class="btn btn-primary" @click="handleCurdData(detailItemsData)">确认操作</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- 轻量提示框 -->
+    <div id="handleCurdToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true"
+      data-delay="2000">
+      <div class="toast-header">
+        <strong class="mr-auto">温馨提示</strong>
+        <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="toast-body">
+        {{tipsInfo}}
+      </div>
+    </div>
+  </div>
+
+  <!-- jQuery文件。务必在bootstrap.min.js 之前引入 -->
+  <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.slim.min.js"></script>
+  <!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+  <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.1/js/bootstrap.bundle.min.js"></script>
+  <!-- 导入vue包 -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+  <!-- axios -->
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <!-- inner js -->
+  <script src="index.js"></script>
+</body>
+
+</html>
