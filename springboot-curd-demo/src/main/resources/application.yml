@@ -1,0 +1,14 @@
+mybatis-plus:
+  mapper-locations: classpath:mappers/**/*.xml
+  type-aliases-package: club.codeworker.curd.demo.domain.entity
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/info_manage?characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useAffectedRows=true
+    password: root
+    username: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jackson:
+    time-zone: GMT+8
+    date-format: yyyy-MM-dd HH:mm:ss
